@@ -1,0 +1,16 @@
+{
+  "name": "my-app",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "hono": "^4.12.23"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "wrangler": "^4.4.0"
+  }
+}
