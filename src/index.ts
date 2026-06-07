@@ -8,6 +8,11 @@ const VERIFY_TOKEN = 'mi_token_secreto_bf_2026'
 // Almacén temporal de conexiones de React en memoria
 const clientesReact = new Set<any>()
 
+// Ruta raíz para que no aparezca el error de Railway en el navegador
+app.get('/', (c) => {
+  return c.text('🚀 Servidor de Webhooks de la Corporación Benjamín Franklin activo y corriendo en Bun.')
+})
+
 /**
  * A. ENDPOINT WEBSOCKET: Usando la sintaxis actual de la documentación
  */
