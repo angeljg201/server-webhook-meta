@@ -2,8 +2,8 @@
   "name": "my-app",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "start": "bun run src/index.ts",
+  "dev": "bun --watch src/index.ts",
+  "start": "bun x prisma generate && bun x prisma db push && bun run src/index.ts",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
