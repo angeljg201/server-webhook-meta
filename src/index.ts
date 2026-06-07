@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 // Importamos directamente las herramientas oficiales de Bun desde hono/bun
 import { upgradeWebSocket, websocket } from 'hono/bun'
+import { prisma } from '../lib/prisma'
+
 
 const app = new Hono()
 const VERIFY_TOKEN = 'mi_token_secreto_bf_2026'
@@ -93,12 +95,28 @@ app.post('/webhook', async (c) => {
     anuncio: message.referral?.headline || 'Mensaje Orgánico (Sin anuncio)'
   }
 
-  // Transmitimos a los clientes de React usando las conexiones del Set
+  // 1. GUARDAMOS EL REGISTRO EN POSTGRESQL USANDO TU CLIENTE PERSONALIZADO
+  try {
+    // Asegúrate de que el modelo en tu schema.prisma se llame "lead" (en minúscula o según lo hayas definido)
+    await prisma.lead.create({
+      data: {
+        id: datosLead.id,
+        nombre: datosLead.nombre,
+        celular: datosLead.celular,
+        mensaje: datosLead.mensaje,
+        anuncio: datosLead.anuncio,
+      }
+    })
+    console.log(`💾 Lead de ${datosLead.nombre} guardado exitosamente en Postgres.`)
+  } catch (dbError) {
+    console.error('⚠️ Error al registrar el lead en la Base de Datos:', dbError)
+  }
+
+  // 2. TRANSMITIMOS A LOS CLIENTES DE REACT EN TIEMPO REAL
   for (const ws of clientesReact) {
     try {
       ws.send(JSON.stringify(datosLead))
     } catch (err) {
-      // Si por alguna razón una conexión se quedó corrupta en el bucle, la limpiamos
       clientesReact.delete(ws)
     }
   }

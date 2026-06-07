@@ -1,0 +1,22 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Lead {
+  id        String   @id // Usaremos el ID único del mensaje que manda Meta (wamid...)
+  nombre    String
+  celular   String
+  mensaje   String
+  anuncio   String
+  createdAt DateTime @default(now())
+}

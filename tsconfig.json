@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": ["bun-types"],
@@ -10,6 +10,8 @@
       "ESNext"
     ],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+    "esModuleInterop": true,
+    "ignoreDeprecations": "6.0",
   },
 }
