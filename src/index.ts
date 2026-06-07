@@ -8,25 +8,49 @@ const VERIFY_TOKEN = 'mi_token_secreto_bf_2026'
 // Almacén temporal de conexiones de React en memoria
 const clientesReact = new Set<any>()
 
-// Ruta raíz para que no aparezca el error de Railway en el navegador
+// Ruta raíz para confirmación de despliegue en navegador o proxy de Railway
 app.get('/', (c) => {
   return c.text('🚀 Servidor de Webhooks de la Corporación Benjamín Franklin activo y corriendo en Bun.')
 })
 
 /**
- * A. ENDPOINT WEBSOCKET: Usando la sintaxis actual de la documentación
+ * A. ENDPOINT WEBSOCKET: Manejo avanzado de conexión en tiempo real
  */
 app.get(
   '/ws',
   upgradeWebSocket((c) => {
+    // Leemos la variable de entorno. Si no existe, dejamos localhost por defecto
+    const envOrigins = process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000'
+    
+    // Convertimos el string separado por comas en un array limpio de espacios
+    const allowedOrigins = envOrigins.split(',').map(origin => origin.trim())
+
     return {
+      // Validamos dinámicamente si el origen del frontend está autorizado
+      checkOrigin: (origin) => {
+        // En entornos de desarrollo o clientes muy específicos, si origin viene vacío lo permitimos
+        if (!origin) return true 
+        
+        const isAllowed = allowedOrigins.includes(origin)
+        if (!isAllowed) {
+          console.warn(`⚠️ Intento de conexión bloqueado por CORS desde el origen: ${origin}`)
+        }
+        return isAllowed
+      },
+
       onOpen(evt, ws) {
         clientesReact.add(ws)
-        console.log('💻 Interfaz React conectada al WebSocket')
+        console.log('💻 Interfaz React conectada exitosamente al WebSocket')
       },
+
+      // Parche obligatorio para que Bun Runtime mantenga viva la conexión pasiva
+      onMessage(evt, ws) {
+        // Se deja vacío de manera intencional (canal pasivo solo de envío POST -> WS)
+      },
+
       onClose(evt, ws) {
         clientesReact.delete(ws)
-        console.log('❌ Interfaz React desconectada')
+        console.log('❌ Interfaz React desconectada del WebSocket')
       },
     }
   })
@@ -41,7 +65,7 @@ app.get('/webhook', (c) => {
   const challenge = c.req.query('hub.challenge')
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-    console.log('¡Webhook verificado por Meta!')
+    console.log('¡Webhook verificado con éxito por Meta!')
     return c.text(challenge || '')
   }
   return c.text('Token inválido', 403)
@@ -71,15 +95,20 @@ app.post('/webhook', async (c) => {
 
   // Transmitimos a los clientes de React usando las conexiones del Set
   for (const ws of clientesReact) {
-    ws.send(JSON.stringify(datosLead))
+    try {
+      ws.send(JSON.stringify(datosLead))
+    } catch (err) {
+      // Si por alguna razón una conexión se quedó corrupta en el bucle, la limpiamos
+      clientesReact.delete(ws)
+    }
   }
 
   return c.text('EVENT_RECEIVED', 200)
 })
 
-// EXPORTACIÓN ACTUAL: Pasamos directamente el objeto websocket importado de hono/bun
+// EXPORTACIÓN ACTUAL: Mapeo de puertos para Railway y motor WS nativo de Bun
 export default {
   port: process.env.PORT || 3000,
   fetch: app.fetch,
-  websocket, // <--- Aquí inyectas el helper tal como lo pide la documentación oficial
+  websocket,
 }
