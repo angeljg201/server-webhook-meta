@@ -89,9 +89,9 @@ app.post('/webhook', async (c) => {
 
   const datosLead = {
     id: message.id || Date.now().toString(),
-    nombre: contact.profile.name,
-    celular: contact.wa_id,
-    mensaje: message.text?.body || '',
+    nombre: contact.profile?.name || 'Alumno sin nombre', // Evita caída si el perfil es privado
+    celular: contact.wa_id || message.from || 'Sin número',
+    mensaje: message.text?.body || 'Mensaje multimedia', // Evita caída si envían foto/audio en vez de texto
     anuncio: message.referral?.headline || 'Mensaje Orgánico (Sin anuncio)'
   }
 
